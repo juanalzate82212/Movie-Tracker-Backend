@@ -24,8 +24,10 @@ export class MoviesService {
         });
     }
 
-    async getUserMovies(userId: string) {
-        return this.movieModel.find({ userId: new Types.ObjectId(userId) });
+    async getUserMovies(userId: string, status?: 'pending' | 'watched') {
+        const filter: any = { userId: new Types.ObjectId(userId) };
+        if (status) filter.status = status;
+        return this.movieModel.find(filter);
     }
 
     async updateMovie(
