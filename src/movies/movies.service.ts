@@ -1,7 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Movie, MovieDocument } from './movie.schema';
+import { UpdateMovieDto } from './dto/update-movie.dto';
 
 @Injectable()
 export class MoviesService {
@@ -31,15 +32,36 @@ export class MoviesService {
     }
 
     async updateMovie(
+        movieId: string,
         userId: string,
-        tmdbId: number,
-        status: 'pending' | 'watched',
-        rating?: number,
+        updates: UpdateMovieDto,
     ) {
-        return this.movieModel.findOneAndUpdate(
-            { userId, tmdbId },
-            { status, rating },
-            { new: true },
-        );
+        const movie = await this.movieModel.findById(movieId);
+
+        if (!movie) {
+            throw new NotFoundException('Movie not found');
+        }
+
+        if (movie.userId.toString() !== userId) {
+            throw new ForbiddenException('Not your movie');
+        }
+
+        Object.assign(movie, updates);
+        return movie.save();
+    }
+
+    async deleteMovie(movieId: string, userId: string) {
+        const movie = await this.movieModel.findById(movieId);
+
+        if (!movie) {
+            throw new NotFoundException('Movie not found');
+        }
+
+        if (movie.userId.toString() !== userId) {
+            throw new ForbiddenException('Not your movie');
+        }
+
+        await movie.deleteOne();
+        return { deleted: true };
     }
 }
