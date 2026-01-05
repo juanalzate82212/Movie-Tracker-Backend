@@ -3,12 +3,14 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Movie, MovieDocument } from './movie.schema';
 import { UpdateMovieDto } from './dto/update-movie.dto';
+import { TmdbService } from 'src/tmdb/tmdb.service';
 
 @Injectable()
 export class MoviesService {
     constructor(
         @InjectModel(Movie.name)
         private movieModel: Model<MovieDocument>,
+        private readonly tmdbService: TmdbService,
     ) { }
 
     async addMovie(
@@ -28,7 +30,16 @@ export class MoviesService {
     async getUserMovies(userId: string, status?: 'pending' | 'watched') {
         const filter: any = { userId: new Types.ObjectId(userId) };
         if (status) filter.status = status;
-        return this.movieModel.find(filter);
+        const movies = await this.movieModel.find(filter);
+        return Promise.all(
+            movies.map(async (movie) => {
+                const details = await this.tmdbService.getMovieDetails(movie.tmdbId);
+                return {
+                    ...movie.toObject(),
+                    movie: details,
+                };
+            }),
+        );
     }
 
     async updateMovie(
