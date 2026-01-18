@@ -40,15 +40,18 @@ export class TmdbService {
         const baseUrl = this.configService.get<string>('TMDB_BASE_URL');
 
         try {
-            const response = await firstValueFrom(
-                this.httpService.get(`${baseUrl}/movie/${tmdbId}`, {
-                    params: {
-                        api_key: apiKey,
-                    },
-                }),
-            );
+            const [movieResponse, director] = await Promise.all([
+                firstValueFrom(
+                    this.httpService.get(`${baseUrl}/movie/${tmdbId}`, {
+                        params: {
+                            api_key: apiKey,
+                        },
+                    }),
+                ),
+                this.getMovieDirector(tmdbId),
+            ]);
 
-            const movie = response.data;
+            const movie = movieResponse.data;
             return {
                 tmdbId: movie.id,
                 title: movie.title,
@@ -57,6 +60,7 @@ export class TmdbService {
                 runtime: movie.runtime,
                 genres: movie.genres.map((g) => g.name),
                 posterPath: movie.poster_path,
+                director,
             };
         } catch (error) {
             if (error.response?.status === 404) {
@@ -64,6 +68,27 @@ export class TmdbService {
             }
 
             throw new InternalServerErrorException('Error fetching data from TMDB');
+        }
+    }
+
+    private async getMovieDirector(tmdbId: number): Promise<string | null> {
+        const apiKey = this.configService.get<string>('TMDB_API_KEY');
+        const baseUrl = this.configService.get<string>('TMDB_BASE_URL');
+
+        try {
+            const response = await firstValueFrom(
+                this.httpService.get(`${baseUrl}/movie/${tmdbId}/credits`, {
+                    params: { api_key: apiKey },
+                }),
+            );
+
+            const director = response.data.crew.find(
+                (member) => member.job === 'Director',
+            );
+
+            return director ? director.name : null;
+        } catch {
+            return null; // no rompemos el flujo si falla credits
         }
     }
 }
