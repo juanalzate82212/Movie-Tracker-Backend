@@ -34,8 +34,15 @@ export class MoviesService {
         return Promise.all(
             movies.map(async (movie) => {
                 const details = await this.tmdbService.getMovieDetails(movie.tmdbId);
+                const obj = movie.toObject();
                 return {
-                    ...movie.toObject(),
+                    //...movie.toObject(),
+                    id: obj._id.toString(),
+                    status: obj.status,
+                    rating: obj.rating,
+                    tmdbId: obj.tmdbId,
+                    createdAt: obj.createdAt,
+                    updatedAt: obj.updatedAt,
                     movie: details,
                 };
             }),

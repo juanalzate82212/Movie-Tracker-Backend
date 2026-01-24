@@ -16,6 +16,9 @@ export class Movie {
 
   @Prop()
   rating?: number;
+
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 export const MovieSchema = SchemaFactory.createForClass(Movie);
