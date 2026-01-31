@@ -13,6 +13,7 @@ import { TmdbModule } from 'src/tmdb/tmdb.module';
     TmdbModule,
   ],
   controllers: [MoviesController],
-  providers: [MoviesService]
+  providers: [MoviesService],
+  exports: [MongooseModule],
 })
 export class MoviesModule {}

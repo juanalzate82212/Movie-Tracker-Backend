@@ -24,4 +24,10 @@ export class UsersController {
             createdAt: dbUser.createdAt,
         };
     }
+
+    @UseGuards(JwtAuthGuard)
+    @Get('me/stats')
+    async getStats(@CurrentUser() user) {
+        return this.usersService.getUserStats(user.userId);
+    }
 }
