@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { User, UserDocument } from './users.schema';
 import { Model, Types } from 'mongoose';
@@ -46,5 +46,51 @@ export class UsersService {
             mostAddedTmdbId: mostAdded[0]?._id ?? null,
             mostAddedCount: mostAdded[0]?.count ?? 0,
         };
+    }
+
+    async getFavorites(userId: string) {
+        const user = await this.userModel.findById(userId).select('favorites');
+
+        if(!user){
+            throw new NotFoundException('Usuario no encontrado');
+        }
+
+        return user.favorites;
+    }
+
+    async updateFavorites(userId: string, favorites: number[]) {
+        if (favorites.length > 5){
+            throw new BadRequestException('Máximo 5 películas favoritas');
+        }
+
+        const uniqueFavorites = [...new Set(favorites)];
+        if (uniqueFavorites.length !== favorites.length) {
+            throw new BadRequestException('No permiten duplicados');
+        }
+
+        const user = await this.userModel.findByIdAndUpdate(
+            userId,
+            { favorites: uniqueFavorites },
+            { new: true },  
+        );
+
+        if (!user) {
+            throw new NotFoundException('Usuario no encontrado')
+        }
+
+        return user.favorites;
+    }
+
+    async removeFavorite(userId: string, tmdbId: number) {
+        const user = await this.userModel.findById(userId);
+
+        if (!user) {
+            throw new NotFoundException('Usuario no encontrado')
+        }
+
+        user.favorites = user.favorites.filter(id => id !== tmdbId);
+        await user.save();
+
+        return user.favorites;
     }
 }
