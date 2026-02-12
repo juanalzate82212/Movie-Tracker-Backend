@@ -46,7 +46,7 @@ export class UsersController {
     }
 
     @UseGuards(JwtAuthGuard)
-    @Delete('me/favorites')
+    @Delete('me/favorites/:tmdbId')
     removeFavorite(@CurrentUser() user, @Param('tmdbId') tmdbId: string,) {
         return this.usersService.removeFavorite(user.userId, Number(tmdbId));
     }
