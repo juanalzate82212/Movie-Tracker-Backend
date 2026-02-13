@@ -9,13 +9,14 @@ import { ConfigModule } from '@nestjs/config';
 import { TmdbModule } from './tmdb/tmdb.module';
 
 @Module({
-  imports: [AuthModule,
+  imports: [
+    AuthModule,
     MoviesModule,
-    MongooseModule.forRoot('mongodb://localhost:27017/movie-tracker'),
-    UsersModule,
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+    MongooseModule.forRoot(process.env.MONGO_URI!),
+    UsersModule,
     TmdbModule,
   ],
   controllers: [AppController],
